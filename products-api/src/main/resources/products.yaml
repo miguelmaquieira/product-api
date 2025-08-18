@@ -1,0 +1,183 @@
+openapi: 3.1.0
+info:
+  title: Price Service API
+  description: >
+    API to fetch the applicable price for a product and to obtain a JWT token for
+    authenticated requests. JWT is required by default for all endpoints **except**
+    `/api/v1/prices`, which is explicitly public.
+  version: 1.0.0
+servers:
+  - url: /inditex
+
+tags:
+  - name: Price
+    description: Operations related to price retrieval
+  - name: Auth
+    description: Authentication endpoints
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate user and obtain a JWT
+      operationId: login
+      description: |
+        Validates user credentials and returns a signed JWT to be used in the Authorization header.
+        Example: `Authorization: Bearer <token>`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              default:
+                value:
+                  username: "user@example.com"
+                  password: "secret"
+      responses:
+        '200':
+          description: JWT successfully issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtResponse'
+              examples:
+                default:
+                  value:
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    tokenType: "Bearer"
+                    expiresIn: 3600
+        '400':
+          description: Malformed request payload
+        '401':
+          description: Invalid username or password
+        '500':
+          description: Internal server error
+
+  /api/v1/prices:
+    get:
+      tags:
+        - Price
+      summary: Get the applicable price for a product at a given time.
+      operationId: getPrice
+      description: Returns the price for a product at a specific date and time based on priority and date ranges.
+      parameters:
+        - name: brandId
+          in: query
+          description: The brand ID to which the product belongs.
+          required: true
+          schema:
+            type: integer
+        - name: productId
+          in: query
+          description: The product ID for which the price is being queried.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: date
+          in: query
+          description: The date and time for which to retrieve the price (ISO 8601 format, UTC).
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: currency
+          in: query
+          description: The currency of the price. If not provided, defaults to 'EUR'.
+          required: false
+          schema:
+            type: string
+            default: "EUR"  # Default currency value is 'EUR'
+            example: "EUR"
+      responses:
+        '200':
+          description: Successful response, returns the price details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceResponse'
+        '400':
+          description: Invalid input. The date, productId, or brandId may be missing or in the wrong format.
+        '404':
+          description: Price not found for the given product, brand, and date.
+        '500':
+          description: Internal server error.
+
+components:
+  schemas:
+    PriceResponse:
+      type: object
+      required:
+        - productId
+        - brandId
+        - priceList
+        - price
+        - startDate
+        - endDate
+        - currency
+      properties:
+        brandId:
+          type: integer
+          description: The brand identifier.
+        productId:
+          type: integer
+          format: int64
+          description: The product identifier.
+        priceList:
+          type: integer
+          description: The price list identifier, representing a specific pricing catalog (e.g., standard, promotional, seasonal).
+        startDate:
+          type: string
+          format: date-time
+          description: The start date of the price validity, including the time.
+        endDate:
+          type: string
+          format: date-time
+          description: The end date of the price validity, including the time.
+        price:
+          type: string
+          format: decimal
+          description: The applicable price for the product.
+        currency:
+          type: string
+          description:  The currency of the price (ISO 4217 format, e.g., "EUR").
+
+    LoginRequest:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+          description: Username or email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: secret
+
+    JwtResponse:
+      type: object
+      required: [ token ]
+      properties:
+        token:
+          type: string
+          description: Signed JWT
+        tokenType:
+          type: string
+          description: Token type (usually "Bearer")
+          default: Bearer
+        expiresIn:
+          type: integer
+          description: Expiration time in seconds
+          example: 3600
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

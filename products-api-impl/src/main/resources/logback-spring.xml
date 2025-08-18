@@ -1,0 +1,59 @@
+<configuration>
+
+    <!-- Console appender (always on) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===== local & dev: console only ===== -->
+    <springProfile name="local,dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.mgm.inditex" level="DEBUG"/>
+    </springProfile>
+
+    <!-- ===== other profiles (e.g., qa, prod): enable Logstash ===== -->
+    <springProfile name="performance,staging,prod">
+        <!-- Make destination configurable -->
+        <property name="LOGSTASH_DESTINATION" value="${LOGSTASH_DESTINATION:-localhost:5044}"/>
+
+        <!-- Logstash TCP appender -->
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+            <destination>${LOGSTASH_DESTINATION}</destination>
+            <reconnectionDelay>30000</reconnectionDelay>
+            <!-- LogstashEncoder formats the log messages as JSON -->
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <level>severity</level>
+                    <loggerName>logger_name</loggerName>
+                    <threadName>thread_name</threadName>
+                    <message>message</message>
+                    <mdc>mdc</mdc>
+                    <exception>exception</exception>
+                </fieldNames>
+            </encoder>
+        </appender>
+
+        <!-- Async wrapper around logstash appender -->
+        <appender name="ASYNC_LOGSTASH" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="LOGSTASH"/>
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+        </appender>
+
+        <!-- Root logger configuration -->
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_LOGSTASH"/>
+        </root>
+
+        <logger name="com.mgm.inditex" level="INFO">
+            <appender-ref ref="ASYNC_LOGSTASH"/>
+        </logger>
+    </springProfile>
+</configuration>

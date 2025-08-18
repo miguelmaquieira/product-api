@@ -1,0 +1,760 @@
+{
+  "info": {
+    "_postman_id": "6e95ec52-81d0-4a81-8148-15f2404e1772",
+    "name": "Price Service API \u2014 Login & Prices",
+    "description": "Collection to test the JWT login and the price endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "23091715"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (get JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "let jsonData = {};",
+                  "try { jsonData = pm.response.json(); } catch (e) { jsonData = {}; }",
+                  "pm.test('Response has token', function () { pm.expect(jsonData.token).to.exist; });",
+                  "if (jsonData.token) {",
+                  "  pm.environment.set('jwt', jsonData.token);",
+                  "  if (jsonData.expiresIn) pm.environment.set('jwt_expiresIn', jsonData.expiresIn.toString());",
+                  "  if (jsonData.tokenType) pm.environment.set('jwt_type', jsonData.tokenType);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"miguel@inditex.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate and receive a JWT. Uses the email/password expected by your current AuthController."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Price",
+      "item": [
+        {
+          "name": "Get Price (public)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=35455&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "Fetch applicable price. This endpoint is public per your spec."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Price (with Bearer auth, optional)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=35455&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "Same as above but sends Authorization: Bearer {{jwt}} if you want to test secured paths later."
+          },
+          "response": []
+        },
+        {
+          "name": "Missing brandId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?productId=35455&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "brandId is required"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing productId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "productId is required"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=35455",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                }
+              ]
+            },
+            "description": "date is required"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid brandId (non-integer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=abc&productId=35455&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "abc"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "brandId must be an integer"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid productId (non-integer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=xyz&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "xyz"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "productId must be an integer"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid date format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=35455&date=14-06-2020",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "14-06-2020"
+                }
+              ]
+            },
+            "description": "date must be ISO-8601"
+          },
+          "response": []
+        },
+        {
+          "name": "Non-existent product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=99999&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "99999"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "No price for unknown product"
+          },
+          "response": []
+        },
+        {
+          "name": "Non-existent brand",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=999&productId=35455&date=2020-06-14T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "999"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                }
+              ]
+            },
+            "description": "No price for unknown brand"
+          },
+          "response": []
+        },
+        {
+          "name": "Date outside validity range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=35455&date=2019-01-01T10:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2019-01-01T10:00:00Z"
+                }
+              ]
+            },
+            "description": "No price at this date"
+          },
+          "response": []
+        },
+        {
+          "name": "Unsupported currency",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prices?brandId=1&productId=35455&date=2020-06-14T10:00:00Z&currency=USD",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "brandId",
+                  "value": "1"
+                },
+                {
+                  "key": "productId",
+                  "value": "35455"
+                },
+                {
+                  "key": "date",
+                  "value": "2020-06-14T10:00:00Z"
+                },
+                {
+                  "key": "currency",
+                  "value": "USD"
+                }
+              ]
+            },
+            "description": "USD not available (or 400 if validated)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Actuator",
+      "item": [
+        {
+          "name": "actuator",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseActuatorUrl}}/actuator",
+              "host": [
+                "{{baseActuatorUrl}}"
+              ],
+              "path": [
+                "actuator"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseActuatorUrl}}/actuator/health",
+              "host": [
+                "{{baseActuatorUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseActuatorUrl}}/actuator/metrics",
+              "host": [
+                "{{baseActuatorUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "metrics"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "mappings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseActuatorUrl}}/actuator/mappings",
+              "host": [
+                "{{baseActuatorUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "mappings"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/inditex"
+    },
+    {
+      "key": "baseActuatorUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ]
+}

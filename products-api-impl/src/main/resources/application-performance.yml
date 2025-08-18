@@ -1,0 +1,21 @@
+server:
+  port: 9090
+
+spring:
+  flyway:
+    locations: classpath:db/migration/common, classpath:db/migration/performance
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
+    com.mgm.stocksorting: ${LOG_LEVEL:INFO}
+
+app:
+  security:
+    allowed-origins:
+      - http://localhost:8080
+    whitelisted-paths:
+      - /actuator
+      - /inditex/api/v1/auth/login
+      - /inditex/api/v1/**

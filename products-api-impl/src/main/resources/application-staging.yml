@@ -1,0 +1,14 @@
+spring:
+  flyway:
+    locations: classpath:db/migration/common, classpath:db/migration/staging
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+app:
+  security:
+    allowed-origins:
+      - http://localhost:8080
+    whitelisted-paths:
+      - /actuator
+      - /inditex/api/v1/auth/login

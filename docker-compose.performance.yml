@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "9090:9090"
+    container_name: product-test-app
+    environment:
+      - SPRING_PROFILES_ACTIVE=performance
+      - LOGGING_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:9090/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  jmeter:
+    image: justb4/jmeter
+    container_name: product-api-jmeter
+    depends_on:
+      app:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        rm -rf .jmeter/results.jtl .jmeter/report .jmeter/jmeter.log;
+        mkdir -p .jmeter/report;
+        jmeter -n \
+          -t performance_test.jmx \
+          -l .jmeter/results.jtl \
+          -e -o .jmeter/report \
+          -j .jmeter/jmeter.log
+    volumes:
+      - .:/test
+    working_dir: /test

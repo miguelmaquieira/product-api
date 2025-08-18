@@ -1,0 +1,12 @@
+spring:
+  flyway:
+    locations: classpath:db/migration/common, classpath:db/migration/dev
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
